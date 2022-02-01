@@ -1,0 +1,230 @@
+---
+title: "Levenstein statistics plot"
+author: "Shoshana Novik"
+date: "6/24/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+theme_set(theme_classic())
+```
+
+## R Markdown
+
+```{r}
+install.packages("viridis")
+library(viridis)
+```
+
+
+```{r}
+library("readxl")
+sws_data <- read_excel("~/CSHL Summer/sws_stats_plots/Slow_wave_statistics.xlsx")
+sws_means <- read_excel("~/CSHL Summer/sws_stats_plots/RMeans.xlsx")
+sws_cvs <- read_excel("~/CSHL Summer/sws_stats_plots/RCVs.xlsx")
+allDurs <- read_excel("~/CSHL Summer/Data_CSVs/allDurs.xlsx")
+scc_1 <- read_excel("~/CSHL Summer/sws_stats_plots/SCC_20140526_277um.xlsx")
+scc_2 <- read_excel("~/CSHL Summer/sws_stats_plots/SCC_BWRat17_121912.xlsx")
+uddu <- read.csv("~/CSHL Summer/sws_stats_plots/test.csv")
+udduBWRat17 <- read.csv("~/CSHL Summer/sws_stats_plots/scc_BWRat17_121912_real.csv")
+```
+
+```{r}
+# Create the means plot
+group.colors <- c("UP" = "red", "DOWN" = "blue")
+
+sws_means %>%
+  group_by(State) %>%
+  ggplot(mapping = aes(x = State, y = Mean, color = State)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  ylab("Mean durations (s)") + 
+  scale_x_discrete(limits = c("UP", "DOWN")) +
+  #scale_y_continuous(breaks = c(0.1, 0.3, 1, 3), labels = c(0.1, 0.3, 1, 3)) +
+  scale_color_manual(values=group.colors)
+```
+
+```{r}
+# Create the CV plot
+group.colors <- c("UP" = "red", "DOWN" = "blue")
+
+sws_cvs %>%
+  group_by(State) %>%
+  ggplot(mapping = aes(x = State, y = CV, color = State)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  ylab("CV") +
+  scale_x_discrete(limits = c("UP", "DOWN")) +
+  scale_y_continuous(breaks = c(0.5, 1, 1.5), labels = c(0.5, 1, 1.5)) +
+  ylim(0, 1.5) +
+  scale_color_manual(values=group.colors)
+```
+
+
+```{r}
+# Histogram of durations
+group.colors <- c("UP" = "red", "DOWN" = "blue")
+
+allDurs %>%
+  group_by(States) %>%
+  ggplot(mapping = aes(x = Duration, color = States)) +
+  geom_histogram(bins = 20, fill = 'white') +
+  xlab("Duration (s)") +
+  scale_x_continuous(trans='log10') +
+  scale_color_manual(values=group.colors)
+  
+```
+```{r}
+# Histogram of mean durations
+
+sws_means %>%
+  group_by(State) %>%
+  ggplot(mapping = aes(x = Mean, color = State)) +
+  geom_histogram(bins = 20, fill = 'white') +
+  xlab("Mean Durations (s)")
+```
+
+```{r}
+scc_1 %>%
+  group_by(Lag) %>%
+  ggplot(mapping = aes(x = Lag, y = SCC, color = Lag)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  xlab("Type of transition between consecutive states")
+```
+```{r}
+scc_2 %>%
+  group_by(Lag) %>%
+  ggplot(mapping = aes(x = Lag, y = SCC, color = Lag)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  xlab("Type of transition between consecutive states") +
+  ylim(-1, 1)
+```
+
+```{r}
+uddu %>%
+  ggplot(mapping = aes(x = DU, y = UD, color = Num_ups, na.rm = TRUE)) +
+  geom_point() +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  #cmap_color_continuous(palette = "blues", reverse = FALSE) +
+  geom_abline(mapping = aes(slope = 1, intercept = 0)) +
+  ylab("Up to Down") +
+  xlab("Down to Up") +
+  xlim(-0.5, 1) +
+  ylim(-0.5, 0.6)
+
+uddu %>%
+  filter(Num_ups > 50) %>%
+  ggplot(mapping = aes(x = DU, y = UD, color = Num_ups, na.rm = TRUE)) +
+  geom_point() +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  geom_abline(mapping = aes(slope = 1, intercept = 0)) +
+  ylab("Up to Down") +
+  xlab("Down to Up") +
+  xlim(-0.5, 1) +
+  ylim(-0.5, 0.6)
+
+uddu %>%
+  ggplot(mapping = aes(y = Num_ups)) +
+  geom_boxplot(na.rm = TRUE)
+
+uddu %>%
+  summarise("Mean number of up states" = mean(Num_ups, na.rm = TRUE),"Interquartile range" = IQR(Num_ups, na.rm = TRUE))
+```
+```{r}
+udduBWRat17 %>%
+  ggplot(mapping = aes(x = DU, y = UD, color = Num_ups, na.rm = TRUE)) +
+  geom_point() +
+  geom_abline(mapping = aes(slope = 1, intercept = 0)) +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  ylab("Up to Down") +
+  xlab("Down to Up") +
+  xlim(-0.5, 1) +
+  ylim(-0.5, 0.6)
+
+udduBWRat17 %>%
+  filter(Num_ups > 50) %>%
+  ggplot(mapping = aes(x = DU, y = UD, color = Num_ups, na.rm = TRUE)) +
+  geom_point() +
+  geom_abline(mapping = aes(slope = 1, intercept = 0)) +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  ylab("Up to Down") +
+  xlab("Down to Up") +
+  xlim(-0.5, 1) +
+  ylim(-0.5, 0.6)
+
+udduBWRat17 %>%
+  ggplot(mapping = aes(y = Num_ups)) +
+  geom_boxplot(na.rm = TRUE)
+
+udduBWRat17 %>%
+  summarise("Mean number of up states" = mean(Num_ups, na.rm = TRUE),"Interquartile range" = IQR(Num_ups, na.rm = TRUE))
+```
+
+```{r}
+pivoted_uddu <- uddu %>%
+  pivot_longer(!Num_ups, names_to = "transition_type", values_to = "scc")
+
+pivoted_uddu %>%
+  filter(transition_type == "UD" | transition_type == "DU") %>%
+  group_by(transition_type) %>%
+  ggplot(mapping = aes(x = transition_type, y = scc, color = Num_ups)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  xlab("Type of transition between consecutive states") +
+  ylim(-0.5, 1)
+
+pivoted_uddu %>%
+  filter(Num_ups > 50) %>%
+  filter(transition_type == "UD" | transition_type == "DU") %>%
+  group_by(transition_type) %>%
+  ggplot(mapping = aes(x = transition_type, y = scc, color = Num_ups)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  xlab("Type of transition between consecutive states") +
+  ylim(-0.5, 1)
+```
+
+```{r}
+pivoted_scc_bwrat17 <- udduBWRat17 %>%
+  pivot_longer(!Num_ups, names_to = "transition_type", values_to = "scc")
+
+pivoted_scc_bwrat17 %>%
+  filter(transition_type == "UD" | transition_type == "DU") %>%
+  group_by(transition_type) %>%
+  ggplot(mapping = aes(x = transition_type, y = scc, color = Num_ups)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  xlab("Type of transition between consecutive states") +
+  ylim(-0.5, 1)
+
+pivoted_scc_bwrat17 %>%
+  filter(Num_ups > 50) %>%
+  filter(transition_type == "UD" | transition_type == "DU") %>%
+  group_by(transition_type) %>%
+  ggplot(mapping = aes(x = transition_type, y = scc, color = Num_ups)) +
+  geom_boxplot() +
+  geom_point(position = "jitter") +
+  scale_color_gradient(low = 'darkseagreen1', high = 'darkgreen') +
+  xlab("Type of transition between consecutive states") +
+  ylim(-0.5, 1)
+```
+
+```{r}
+udduBWRat17 %>%
+  ggplot(mapping = aes(x = DU, y = UD, na.rm = TRUE)) +
+  geom_point() +
+  #geom_abline(mapping = aes(slope = 1, intercept = 0)) +
+  ylab("Up to Down") +
+  xlab("Down to Up")
+  #ylim(-1, 1) +
+  #xlim(-1, 1)
+```
+
